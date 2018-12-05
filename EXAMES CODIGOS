@@ -1,0 +1,417 @@
+
+EJERCICI 1
+PFont f;
+int poblacionMax;
+float rangoMutacion;
+String MiFrase;
+Poblacion Poblacion;
+ 
+void setup() {
+  MiFrase = "1768119/1589127";
+  poblacionMax= 250;
+  rangoMutacion = 0.001;
+   Poblacion = new Poblacion(MiFrase, rangoMutacion, poblacionMax);
+}
+ 
+void draw() {
+
+  Poblacion.naturalSelection();
+
+  Poblacion.generate();
+
+  Poblacion.calcFitness();
+  Informacion();
+
+  if (Poblacion.finished()) {
+    noLoop();
+  }
+}
+ 
+void Informacion() {
+  String respuesta = Poblacion.getBest();
+   println("matr ", respuesta);
+}
+
+
+ class DNA {
+
+  char[] genes;
+ 
+  float fitness;
+
+  DNA(int num) {
+    genes = new char[num];
+    for (int i = 0; i < genes.length; i++) {
+      genes[i] = (char) random(32,128);  
+    }
+  }
+ 
+
+  String getPhrase() {
+    return new String(genes);
+  }
+ 
+
+  void fitness (String MiFrase) {
+     int score = 0;
+     for (int i = 0; i < genes.length; i++) {
+        if (genes[i] == MiFrase.charAt(i)) {
+          score++;
+        }
+     }
+     fitness = (float)score / (float)MiFrase.length();
+  }
+ 
+
+  DNA crossover(DNA partner) {
+
+    DNA child = new DNA(genes.length);
+ 
+    int midpoint = int(random(genes.length));
+ 
+
+    for (int i = 0; i < genes.length; i++) {
+      if (i > midpoint) child.genes[i] = genes[i];
+      else              child.genes[i] = partner.genes[i];
+    }
+    return child;
+  }
+ 
+
+  void mutate(float rangoMutacion) {
+    for (int i = 0; i < genes.length; i++) {
+      if (random(1) < rangoMutacion) {
+        genes[i] = (char) random(32,128);
+      }
+    }
+  }
+}
+
+
+
+class Poblacion{
+ float rangoMutacion;           
+  DNA[] Poblacion;            
+  ArrayList<DNA> matingPool;    
+  String MiFrase;                
+  int generaciones;              
+  boolean finished;             
+int perfectScore;
+ 
+  Poblacion(String p, float m, int num) {
+    MiFrase = p;
+    rangoMutacion = m;
+    Poblacion = new DNA[num];
+    for (int i = 0; i < Poblacion.length; i++) {
+      Poblacion[i] = new DNA(MiFrase.length());
+    }
+    calcFitness();
+    matingPool = new ArrayList<DNA>();
+    finished = false;
+    generaciones = 0;
+ 
+    perfectScore = 1;
+  }
+ 
+
+  void calcFitness() {
+    for (int i = 0; i < Poblacion.length; i++) {
+      Poblacion[i].fitness(MiFrase);
+    }
+  }
+ 
+
+  void naturalSelection() {
+    // Clear the ArrayList
+    matingPool.clear();
+ 
+    float maxFitness = 0;
+    for (int i = 0; i < Poblacion.length; i++) {
+      if (Poblacion[i].fitness > maxFitness) {
+        maxFitness = Poblacion[i].fitness;
+      }
+    }
+ 
+
+    for (int i = 0; i < Poblacion.length; i++) {
+ 
+      float fitness = map(Poblacion[i].fitness,0,maxFitness,0,1);
+      int n = int(fitness * 100);  
+      for (int j = 0; j < n; j++) {             
+        matingPool.add(Poblacion[i]);
+      }
+    }
+  }
+ 
+
+  void generate() {
+
+    for (int i = 0; i < Poblacion.length; i++) {
+      int a = int(random(matingPool.size()));
+      int b = int(random(matingPool.size()));
+      DNA partnerA = matingPool.get(a);
+      DNA partnerB = matingPool.get(b);
+      DNA child = partnerA.crossover(partnerB);
+      child.mutate(rangoMutacion);
+      Poblacion[i] = child;
+    }
+    generaciones++;
+  }
+ 
+
+  String getBest() {
+    float worldrecord = 0.0f;
+    int index = 0;
+    for (int i = 0; i < Poblacion.length; i++) {
+      if (Poblacion[i].fitness > worldrecord) {
+        index = i;
+        worldrecord = Poblacion[i].fitness;
+      }
+    }
+ 
+    if (worldrecord == perfectScore ) finished = true;
+    return Poblacion[index].getPhrase();
+  }
+ 
+  boolean finished() {
+    return finished;
+  }
+ 
+  int getGenerations() {
+    return generaciones;
+  }
+
+  float getAverageFitness() {
+    float total = 0;
+    for (int i = 0; i < Poblacion.length; i++) {
+      total += Poblacion[i].fitness;
+    }
+    return total / (Poblacion.length);
+  }
+ 
+  String allPhrases() {
+    String everything = "";
+ 
+    int displayLimit = min(Poblacion.length,50);
+ 
+ 
+    for (int i = 0; i < displayLimit; i++) {
+      everything += Poblacion[i].getPhrase() + "\n";
+    }
+    return everything;
+  }
+}
+
+
+
+
+
+SEGUNDO EJERCICIO
+class Tree {
+
+  //Atributos
+  Node [] Trunk; //Declarando Array de nodos
+  //Constructor
+
+  Tree(Node n) {
+    Trunk = new Node[1];
+    Trunk[0] = n;
+  }
+
+  //MÃ©todos
+
+  String checkSide(Node n, int val) {
+    String res;
+    if (val >= int(n.value)) {
+      res = "left";
+    } else {
+      res = "right";
+    }
+    return res;
+  }
+
+
+
+  boolean checkEmpty(Node n, String side) {
+    boolean empty = false;
+    if (side == "left") {
+      if (n.left == null) {
+        empty = true;
+      }
+    }
+
+    if (side == "right") {
+      if (n.right == null) {
+        empty = true;
+      }
+    }
+    return empty;
+  }
+
+
+
+  void addLeftChild(Node n) {
+    n.left = str(Trunk.length);
+  }
+
+
+
+  void addRightChild(Node n) {
+    n.right = str(Trunk.length);
+  }
+
+
+
+  void createNode(Node n, int val) {
+    String lado;
+    lado = checkSide(n, val);
+    if (lado == "left") {
+      boolean vacio;
+      vacio = checkEmpty(n, lado);
+      if (vacio == true) {
+        addLeftChild(n);
+        Node nuevo;
+        nuevo = new Node(Trunk.length, int(n.id), val);
+        Trunk = (Node []) append(Trunk, nuevo);
+      } else {
+        createNode(Trunk[int(n.left)], val);
+      }
+    }
+
+
+
+    if (lado == "right") {
+      boolean vacio;
+      vacio = checkEmpty(n, lado);
+      if (vacio == true) {
+        addRightChild(n);
+        Node nuevo;
+        nuevo = new Node(Trunk.length, int(n.id), val);
+        Trunk = (Node []) append(Trunk, nuevo);
+      } else {
+        createNode(Trunk[int(n.right)], val);
+      }
+    }
+  }
+
+  void printData(int i) {
+    println(arbol.Trunk[i].id);
+    println(arbol.Trunk[i].parent);
+    println(arbol.Trunk[i].value);
+    println(arbol.Trunk[i].left);
+    println(arbol.Trunk[i].right);
+    println(arbol.Trunk[i].order);
+    println(arbol.Trunk[i].orderLeft);
+    println(arbol.Trunk[i].orderRight);
+  }
+
+  void acomodar(Node n) {
+    if (n.left != null) { //Izquierda
+      if (n.orderLeft == true) {                       
+        if (n.order == false) {  //revisarOrder
+          Ordenar(n);
+        }
+      } else {
+        irIzq(n);
+      }
+    } else {
+      n.orderLeft=true;
+    }
+    if (n.order==false) {  
+      Ordenar(n);
+    }
+    if (n.right == null) { //derecha
+      n.orderRight=true;
+      irArriba(n);
+    } 
+    if (n.orderRight==false) { //revisarOrder
+      irDch(n);
+    }
+    if (n.parent!=null) { 
+      irArriba(n);
+    }
+  }   //FIN
+
+  void irIzq(Node n) {
+    n.orderLeft=true;
+    acomodar(Trunk[int(n.left)]);
+  }
+
+  void irDch(Node n) {
+    n.orderRight=true;
+    acomodar(Trunk[int(n.right)]);
+  }
+
+  void Ordenar(Node n) {
+    newA[posnewA]=int (n.value);
+    n.order= true;
+    posnewA++;
+  }
+
+  void irArriba(Node n) {
+    acomodar(Trunk[int(n.parent)]);
+  }
+}
+
+int [] a = {4,12,9,23,6,91,2,54,37,6,1,5,78,87,25};
+int [] newA;
+int posnewA;
+Node root; //nodo
+Tree arbol;
+
+void setup() {
+  posnewA = 0;
+  newA = new int [a.length];
+  root = new Node(a[0]); //Nodo
+  arbol = new Tree(root);
+  println(a);
+  println("XXXXXXXXXXXX");
+
+  for (int i = 1; i < a.length; i++) {  //arbol
+    arbol.createNode(arbol.Trunk[0], a[i]);
+  }
+  arbol.acomodar(arbol.Trunk[0]); //Numeros (equis)
+  println(newA);
+}
+
+void draw() {
+}
+
+
+
+
+class Node {
+  String id;
+  String parent;
+  String value;
+  String left;
+  String right;
+  boolean order;
+  boolean orderLeft;
+  boolean orderRight;
+
+  //raÃ­z
+  Node(int v) {
+    id = "0";
+    parent = null;
+    value = str(v);
+    left = null;
+    right = null;
+    order = false; 
+    orderLeft = false;
+    orderRight = false;
+  }
+
+//rama
+  Node(int i, int p, int v) {
+    id = str(i);
+    parent = str(p);
+    value = str(v);
+    left = null;
+    right = null;
+    order = false;
+    orderLeft = false;
+    orderRight = false;
+  }
+}
+
